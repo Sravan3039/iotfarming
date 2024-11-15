@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmSmart - Smart Crop Recommendations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f8f0;
+            background-image: url("https://technical.ly/wp-content/uploads/2022/04/plants-growing-giphy.gif");
+  background-repeat: no-repeat;
+  background-size: 100%;
+
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+            animation: fadeIn 0.5s;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        h1 {
+            color: #2c5282;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #4a5568;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .btn {
+            background-color: #48bb78;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #38a169;
+        }
+
+        .btn-back {
+            background-color: #718096;
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+        }
+
+        .btn-back:hover {
+            background-color: #4a5568;
+        }
+
+        .language-grid, .soil-grid, .crop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 1rem 0;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .location-result {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .location-result:hover {
+            background-color: #f7fafc;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e2e8f0;
+            margin-bottom: 2rem;
+            border-radius: 2px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #48bb78;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .crop-details {
+            text-align: left;
+            margin-top: 1rem;
+        }
+
+        .crop-details h2 {
+            color: #2c5282;
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .crop-details ul {
+            list-style-position: inside;
+            margin-bottom: 1rem;
+        }
+
+        .crop-details li {
+            margin: 0.5rem 0;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Previous pages remain the same until the crops page -->
+
+    <!-- Welcome Page -->
+    <div class="page active" id="welcome">
+        <div class="container">
+            <h1>Welcome to FarmSmart</h1>
+            <p>Get personalized crop recommendations based on your location and local conditions.</p>
+            <div class="progress-bar">
+                <div class="progress" style="width: 20%"></div>
+            </div>
+            <button class="btn" onclick="showPage('language')">Get Started</button>
+        </div>
+    </div>
+
+    <!-- Language Selection Page -->
+    <div class="page" id="language">
+        <div class="container">
+            <button class="btn btn-back" onclick="showPage('welcome')">Back</button>
+            <h1>Select Your Language</h1>
+            <p>Choose your preferred language to continue</p>
+            <div class="progress-bar">
+                <div class="progress" style="width: 40%"></div>
+            </div>
+            <div class="language-grid">
+                <button class="btn" onclick="selectLanguage('English')">English</button>
+                <button class="btn" onclick="selectLanguage('हिंदी')">हिंदी</button>
+                <button class="btn" onclick="selectLanguage('తెలుగు')">తెలుగు</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Selection Page -->
+    <div class="page" id="location">
+        <div class="container">
+            <button class="btn btn-back" onclick="showPage('language')">Back</button>
+            <h1>Select Your Location</h1>
+            <p>Search for your location to get accurate recommendations</p>
+            <div class="progress-bar">
+                <div class="progress" style="width: 60%"></div>
+            </div>
+            <input type="text" class="search-box" placeholder="Search your location..." oninput="searchLocation(this.value)">
+            <div id="locationResults"></div>
+        </div>
+    </div>
+
+    <!-- Soil Selection Page -->
+    <div class="page" id="soil">
+        <div class="container">
+            <button class="btn btn-back" onclick="showPage('location')">Back</button>
+            <h1>Soil Type in Your Region</h1>
+            <p>Select the type of soil in your farm</p>
+            <div class="progress-bar">
+                <div class="progress" style="width: 80%"></div>
+            </div>
+            <div class="soil-grid">
+                <button class="btn" onclick="selectSoil('Alluvial')">Alluvial Soil</button>
+                <button class="btn" onclick="selectSoil('Black')">Black Soil</button>
+                <button class="btn" onclick="selectSoil('Red')">Red Soil</button>
+                <button class="btn" onclick="selectSoil('Laterite')">Laterite Soil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crop Recommendations Page -->
+    <div class="page" id="crops">
+        <div class="container">
+            <button class="btn btn-back" onclick="showPage('soil')">Back</button>
+            <h1>Recommended Crops</h1>
+            <p>Based on your location and soil type</p>
+            <div class="progress-bar">
+                <div class="progress" style="width: 100%"></div>
+            </div>
+            <div id="cropRecommendations" class="crop-grid">
+                <!-- Crop recommendations will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- New Crop Details Page -->
+    <div class="page" id="cropDetails">
+        <div class="container">
+            <button class="btn btn-back" onclick="showPage('crops')">Back</button>
+            <h1 id="cropTitle">Crop Details</h1>
+            <div class="crop-details" id="cropDetailsContent">
+                <!-- Crop details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedLanguage = 'English';
+        let selectedLocation = '';
+        let selectedSoil = '';
+        let selectedCrop = '';
+
+        // Translation data
+        const translations = {
+            'हिंदी': {
+                'Welcome to FarmSmart': 'फार्मस्मार्ट में आपका स्वागत है',
+                'Get Started': 'शुरू करें',
+                'Select Your Language': 'अपनी भाषा चुनें',
+                'Select Your Location': 'अपना स्थान चुनें',
+                'Search your location...': 'अपना स्थान खोजें...',
+                'Soil Type in Your Region': 'आपके क्षेत्र में मिट्टी का प्रकार',
+                'Recommended Crops': 'अनुशंसित फसलें',
+                'Crop Details': 'फसल विवरण',
+                // Add more translations as needed
+            },
+            'తెలుగు': {
+                'Welcome to FarmSmart': 'ఫార్మ్‌స్మార్ట్‌కి స్వాగతం',
+                'Get Started': 'ప్రారంభించండి',
+                'Select Your Language': 'మీ భాషను ఎంచుకోండి',
+                'Select Your Location': 'మీ స్థానాన్ని ఎంచుకోండి',
+                'Search your location...': 'మీ స్థానాన్ని శోధించండి...',
+                'Soil Type in Your Region': 'మీ ప్రాంతంలో నేల రకం',
+                'Recommended Crops': 'సిఫార్సు చేయబడిన పంటలు',
+                'Crop Details': 'పంట వివరాలు',
+                // Add more translations as needed
+            },
+            // Add more languages as needed
+        };
+
+        const cropDatabase = {
+    'Rice': {
+        preservation: [
+            'Store in clean, dry containers with moisture content below 14%',
+            'Use hermetically sealed bags or silos',
+            'Regular monitoring for pest infestation and humidity',
+            'Keep storage area well-ventilated',
+            'Use neem leaves or bay leaves as natural preservatives'
+        ],
+        yield: [
+            'Proper land leveling and puddling',
+            'Use certified seeds and appropriate varieties',
+            'Maintain proper spacing (20x15 cm or as per variety)',
+            'Timely transplanting (21-25 days old seedlings)',
+            'Proper water management - 2.5cm water depth initially',
+            'Regular weeding every 20-25 days',
+            'Balanced fertilization (NPK 120:60:60)',
+            'Timely pest management'
+        ],
+        organic: [
+            'Use green manure crops like Sesbania or Azolla',
+            'Apply well-decomposed farmyard manure (10-15 tonnes/ha)',
+            'Use neem cake for pest control (150 kg/ha)',
+            'Practice crop rotation with legumes',
+            'Use of blue-green algae and Azospirillum',
+            'Natural pest control using neem oil sprays',
+            'Use pheromone traps for pest monitoring'
+        ]
+    },
+    'Wheat': {
+        preservation: [
+            'Store in moisture-proof bags or silos',
+            'Maintain storage moisture below 12%',
+            'Regular cleaning and inspection',
+            'Use diatomaceous earth for natural preservation',
+            'Proper temperature control in storage'
+        ],
+        yield: [
+            'Timely sowing (optimal temperature 20-25°C)',
+            'Proper seed rate (100-125 kg/ha)',
+            'Row spacing of 20-22 cm',
+            'Irrigation at critical stages',
+            'Balanced fertilizer application',
+            'Timely weed management',
+            'Disease monitoring and control'
+        ],
+        organic: [
+            'Use of vermicompost (5 tonnes/ha)',
+            'Crop rotation with legumes',
+            'Mulching with crop residues',
+            'Bio-fertilizers like Azotobacter',
+            'Natural weed management through mulching',
+            'Companion planting with mustard'
+        ]
+    },
+    'Cotton': {
+        preservation: [
+            'Store in dry, clean conditions',
+            'Protect from moisture and contamination',
+            'Regular inspection for pest infestation',
+            'Proper packaging and storage',
+            'Temperature and humidity control'
+        ],
+        yield: [
+            'Deep ploughing in summer',
+            'Optimal spacing (60x30 cm)',
+            'Timely sowing with onset of monsoon',
+            'Regular weeding and hoeing',
+            'Proper irrigation scheduling',
+            'Integrated pest management',
+            'Growth regulator application if needed'
+        ],
+        organic: [
+            'Use of composted manure',
+            'Trap crops for pest management',
+            'Neem-based pest control',
+            'Beneficial insect conservation',
+            'Organic growth promoters',
+            'Inter-cropping with pulses'
+        ]
+    },
+   'Sugarcane': {
+        preservation: [
+            'Store in dry, clean conditions: Once harvested, sugarcane should be stored in a clean environment to avoid contamination and deterioration.',
+'Protect from moisture and contamination: It is crucial to prevent exposure to excessive moisture as it can lead to fungal growth or fermentation, reducing quality.',
+'Regular inspection for pest infestation: Regular checks are essential to prevent damage from pests such as termites or sugarcane borers.',
+'Proper packaging and storage: Use appropriate materials like jute or canvas sacks to store cut sugarcane stalks for short periods.',
+'Temperature and humidity control: To preserve cut cane, it is essential to control environmental factors like temperature and humidity to avoid degradation.'
+],
+        yield: [
+'Deep ploughing in summer: Helps in loosening the soil, improving root penetration, and removing weeds.',
+'Optimal spacing (60x30 cm): Ensuring enough space between plants encourages healthy growth and optimal nutrient uptake.',
+'Timely sowing with the onset of monsoon: Sugarcane benefits from timely planting when moisture is available, especially in monsoon-dependent regions.',
+'Regular weeding and hoeing: Proper removal of weeds helps reduce competition for nutrients, water, and sunlight.',
+'Proper irrigation scheduling: Efficient water management helps prevent water stress and promotes steady growth.',
+'Integrated pest management: Combining chemical, biological, and cultural practices to manage pests ensures healthy crops with minimal pesticide use.',
+'Growth regulator application if needed: Growth regulators can be used to manage crop development stages, improve yield, and control plant height.'
+],
+        organic: [
+'Use of composted manure: Organic manure, such as well-composted cow dung or green manure, enhances soil fertility and structure without chemical inputs.',
+'Organic growth promoters: Natural growth enhancers like seaweed extract and bio-stimulants help improve crop growth organically.',
+'Inter-cropping with pulses: Pulses, like legumes, fix nitrogen in the soil and improve soil fertility, supporting sugarcane growth while reducing the need for synthetic fertilizers.'
+        ]
+    },
+    // Add more crops as needed
+};
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function selectLanguage(language) {
+            selectedLanguage = language;
+            updatePageContent();
+            showPage('location');
+        }
+
+        function updatePageContent() {
+            if (selectedLanguage in translations) {
+                document.querySelectorAll('[data-translate]').forEach(element => {
+                    const key = element.getAttribute('data-translate');
+                    if (translations[selectedLanguage][key]) {
+                        element.textContent = translations[selectedLanguage][key];
+                    }
+                });
+            }
+        }
+
+        function searchLocation(query) {
+            // Simulated location search results
+            const locations = [
+                'Mumbai, Maharashtra',
+                'Delhi, NCR',
+                'Bangalore, Karnataka',
+                'Chennai, Tamil Nadu',
+                'Hyderabad, Telangana'
+            ].filter(loc => loc.toLowerCase().includes(query.toLowerCase()));
+
+            const resultsDiv = document.getElementById('locationResults');
+            resultsDiv.innerHTML = '';
+
+            locations.forEach(location => {
+                const div = document.createElement('div');
+                div.className = 'location-result';
+                div.textContent = location;
+                div.onclick = () => {
+                    selectedLocation = location;
+                    showPage('soil');
+                };
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        function selectSoil(soil) {
+            selectedSoil = soil;
+            showCropRecommendations();
+            showPage('crops');
+        }
+
+        function showCropRecommendations() {
+            const cropRecommendations = {
+                'Alluvial': ['Rice', 'Wheat', 'Sugarcane', 'Maize'],
+                'Black': ['Cotton', 'Soybean', 'Groundnut', 'Pulses'],
+                'Red': ['Groundnut', 'Potato', 'Millets', 'Oilseeds'],
+                'Laterite': ['Cashew', 'Rubber', 'Tea', 'Coffee']
+            };
+
+            const recommendedCrops = cropRecommendations[selectedSoil] || [];
+            const cropDiv = document.getElementById('cropRecommendations');
+            cropDiv.innerHTML = '';
+
+            recommendedCrops.forEach(crop => {
+                const button = document.createElement('button');
+                button.className = 'btn';
+                button.textContent = crop;
+                button.onclick = () => showCropDetails(crop);
+                cropDiv.appendChild(button);
+            });
+        }
+
+        function showCropDetails(crop) {
+            selectedCrop = crop;
+            const details = cropDatabase[crop];
+            if (!details) return;
+
+            document.getElementById('cropTitle').textContent = crop + ' Details';
+            const content = document.getElementById('cropDetailsContent');
+
+            content.innerHTML = `
+                <h2>Preservation Methods</h2>
+                <ul>
+                    ${details.preservation.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+
+                <h2>Tips for Good Yield</h2>
+                <ul>
+                    ${details.yield.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+
+                <h2>Organic Farming Solutions</h2>
+                <ul>
+                    ${details.organic.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            `;
+
+            showPage('cropDetails');
+        }
+    </script>
+</body>
+</html>
